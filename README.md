@@ -2,12 +2,13 @@
 
 ## Overview
 
-This project implements a real-time, voice-controlled chatbot using the [Pipecat](https://github.com/pipecat-ai/pipecat-python) framework. It connects to Google's Gemini Multimodal Live LLM service via Vertex AI, allowing users to interact with the Gemini model through voice using a simple web-based client.
+This project implements a real-time, voice-controlled chatbot using the [Pipecat](https://github.com/pipecat-ai/pipecat-python) framework. It uses a pipeline approach with Speech-to-Text (STT) to convert user audio to text, Google's Gemini LLM (via Vertex AI) for processing the text and generating a response, and Text-to-Speech (TTS) to convert the LLM's text response back to audio for the user. This interaction occurs through a simple web-based client.
 
 ## Features
 
 *   Real-time, bidirectional audio streaming.
-*   Integration with Google Vertex AI Gemini Live API.
+*   Pipeline architecture: STT -> Gemini LLM -> TTS.
+*   Integration with Google Vertex AI for the Gemini LLM.
 *   WebSocket communication between backend and frontend.
 *   Voice Activity Detection (VAD).
 *   Basic function calling support (e.g., ending the call).
@@ -19,18 +20,19 @@ The application consists of a Python backend powered by Pipecat and a simple HTM
 
 ### Backend (`bot.py`)
 
-*   **Framework:** Utilizes the `pipecat-ai` framework for managing the real-time media pipeline.
+*   **Framework:** Utilizes the `pipecat-ai` framework for managing the real-time media pipeline, including separate components for STT, LLM, and TTS.
 *   **Transport:** Employs `WebsocketServerTransport` to handle WebSocket connections from the client (default `ws://localhost:8765`), managing audio input/output streams and VAD using `SileroVADAnalyzer`.
-*   **LLM Integration:** Leverages the custom `GeminiMultimodalLiveLLMService` (from `gemini_multimodal_live_vertex/gemini.py`) to communicate with the Google Vertex AI Gemini endpoint. It's configured for audio modalities and uses a system prompt for LLM guidance.
+*   **STT/TTS Services:** (Details of the specific STT and TTS services used would be listed here if they were explicitly defined in the `bot.py` pipeline, e.g., Google STT, Google TTS). The current `bot.py` uses Google TTS. STT component might be implicitly handled by the LLM service or would need to be added.
+*   **LLM Integration:** Uses the `GeminiMultimodalLiveLLMService` (from `gemini_multimodal_live_vertex/gemini.py`) to communicate with the Google Vertex AI Gemini endpoint primarily for text-based interaction, with the expectation that STT provides text input and a separate TTS service handles audio output of the LLM's text response.
 *   **Context Management:** Maintains conversation history using an adapted `OpenAILLMContext`.
 *   **Asynchronicity:** Built on `asyncio` for efficient handling of concurrent network and AI operations.
 
 ### LLM Service (`gemini_multimodal_live_vertex/gemini.py`)
 
-*   **Custom Pipecat Service:** Extends `LLMService` to specifically handle the Gemini Live API.
-*   **Vertex AI Connection:** Establishes a secure WebSocket connection to the Vertex AI Gemini Multimodal Live endpoint (`wss://[location]-aiplatform.googleapis.com/ws/...`).
+*   **Custom Pipecat Service:** Extends `LLMService`. While named "MultimodalLive", in this STT -> LLM -> TTS setup, it's primarily used for its text processing capabilities, receiving text from an STT service and providing text to a TTS service.
+*   **Vertex AI Connection:** Establishes a secure WebSocket connection to the Vertex AI Gemini endpoint.
 *   **Authentication:** Authenticates using Google Cloud Application Default Credentials (ADC).
-*   **Real-time Streaming:** Manages the bidirectional flow of audio data and control messages (configuration, tool calls) with the Gemini API.
+*   **Communication:** Handles text input (from STT) and text output (to TTS) and tool call interactions with the Gemini API.
 
 ### Frontend (`index.html`)
 
