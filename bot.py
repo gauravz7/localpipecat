@@ -228,8 +228,20 @@ async def main():
         location="us-central1"
     )
     )
-    
-    
+    '''
+    llm = GeminiMultimodalLiveLLMService(
+        api_key=None,
+        project_id="vital-octagon-19612",
+        location="us-central1",
+        model=MODEL,
+        voice_id="Aoede",
+        tools=tools,
+        system_instruction=system_instruction,
+        transcribe_user_audio=False,  # Disable speech-to-text for user input if you don't need it
+        transcribe_model_audio=False,  # Disable speech-to-text for model responses
+        params=InputParams(modalities=GeminiMultimodalModalities.AUDIO ,max_tokens=100 ),
+    )
+    '''
     
     
     async def end_call_handler(
